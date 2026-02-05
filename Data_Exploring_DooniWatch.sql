@@ -17,6 +17,9 @@ GO
 SELECT *
 FROM dbo.Total2025;
 
+SELECT *
+FROM DoonieWatch.[dbo].[DoanhThuSP2025]
+
 
 /* ============================================================
    2. Data Cleaning and Preprocessing
@@ -34,17 +37,18 @@ SET Ngay = TRY_CONVERT(DATE, [Ngày], 103);
 DELETE FROM dbo.DoanhThuSP2025
 WHERE [Sản phẩm] = N'Đồng Hồ LNGIES Thời Trang Cặp Đôi Nam Nữ, Nhiều Màu + Mẫu Unisex, Dây Da Cá Sấu Cao Cấp, Mặt Vuông Saphiere Chống Trầy';
 
+ALTER TABLE Total2025
+ALTER COLUMN [Doanh số các đơn Trả hàng/Hoàn tiền] FLOAT;
+
 
 /* ============================================================
    3. Overall Business Performance (2025)
    ============================================================ */
 
 SELECT 
-    SUM([Tổng doanh số (VND)]) AS Total_Revenue_2025,
-    SUM([Tổng số đơn hàng]) AS Total_Orders_2025,
-    SUM([Đơn đã hoàn trả / hoàn tiền]) AS Total_Refunded_Orders,
-    CAST(SUM([Tổng số đơn hàng]) AS FLOAT) * 100 / NULLIF(SUM([Số lượt truy cập]), 0) AS Conversion_Rate_Percent,
-    CAST(SUM([Đơn đã hoàn trả / hoàn tiền]) AS FLOAT) * 100/ NULLIF(SUM([Tổng số đơn hàng]), 0) AS Refund_Rate_Percent
+    SUM([Tổng doanh số (VND)]) AS Total_Revenue,
+    SUM([Tổng số đơn hàng]) AS Total_Orders,
+    AVG(TRY_CAST(REPLACE([Doanh số trên mỗi đơn hàng], ',', '.') AS FLOAT)) AS AOV
 FROM dbo.Total2025;
 
 
@@ -70,10 +74,10 @@ ORDER BY Month;
 SELECT
     [Sản phẩm] AS Product_Name,
     SUM([Doanh Số]) AS Total_Revenue,
-    SUM([Sản phẩm1]) AS Total_Units_Sold
+    SUM([Sản phẩm1]) AS Total_Units_Sold,
+    SUM([Sản phẩm1])*100 / SUM([Sản phẩm (Thêm vào giỏ hàng)]) AS [Conversion Rate]
 FROM dbo.DoanhThuSP2025
 GROUP BY [Sản phẩm]
-ORDER BY Total_Revenue DESC;
 
 
 -- Monthly product performance
@@ -127,11 +131,12 @@ SELECT
     MONTH(Ngay) AS Month,
     SUM([Tổng số đơn hàng]) AS Total_Orders,
     SUM([Đơn đã hoàn trả / hoàn tiền]) AS Refunded_Orders,
+    SUM([Doanh số các đơn Trả hàng/Hoàn tiền]) AS [Doanh Số Đơn Trả],
     CAST(SUM([Đơn đã hoàn trả / hoàn tiền]) AS FLOAT) * 100 / NULLIF(SUM([Tổng số đơn hàng]), 0) AS Refund_Rate_Percent
-FROM dbo.Total2025
+FROM DoonieWatch.dbo.Total2025
 GROUP BY MONTH(Ngay)
-ORDER BY Refund_Rate_Percent DESC;
 
+--
 
 /* ============================================================
    8. Order Cancellation Analysis
